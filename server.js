@@ -12,7 +12,7 @@ app.use(bodyParser.urlencoded({
  */
 app.use(bodyParser.json());
 
-
+var learnRes = new Map();
 var hardRes = new Map();
 hardRes.set(3131,"block");hardRes.set(3130,"block");hardRes.set(3121,"block");hardRes.set(3120,"shoot");hardRes.set(3111,"block");hardRes.set(3110,"shoot");hardRes.set(3101,"block");hardRes.set(3100,"shoot");
 hardRes.set(3031,"reload");hardRes.set(3030,"reload");hardRes.set(3021,"block");hardRes.set(3020,"reload");hardRes.set(3011,"block");hardRes.set(3010,"reload");hardRes.set(3001,"block");hardRes.set(3000,"reload");
@@ -45,22 +45,42 @@ app.post('/', (req, res) => {
 	if(game == "begin"){game = "next";	
 		res.send("{\n\"action\": \""+hardRes.get(0101)+"\"\n}");
 		l1 = 03;l2 = 03;
-		b1 = 03;b2 = 03;
-		s1 = 00;s2 = 00;
+		b1 = 00;b2 = 00;
+		s1 = 01;s2 = 01;
+		learnRes.clear();
+		
 	}
 	else{
-			l1 = playerLife;l2 = opponentLife;
-			if(playerAction == "shoot"){b1 = 03;s1 = 00;}
-			else if(playerAction == "block"){b1--;}
-			else{b1 = 03;s1 = 01;}
-			
-			if(opponentAction == "shoot"){b2 = 03;s2 = 00;}
-			else if(opponentAction == "block"){b2--;}
-			else{b2 = 03;s2 = 01;}
+		var opponent = (b1*1000)+(s1*100)+(b2*10)+s2;
 		
-		var current = (b1*1000)+(s1*100)+(b2*10)+s2;
-		res.send("{\n\"action\": \""+hardRes.get(current)+"\"\n}"+current);
+		learnRes.set(opponent,""+(opponentAction)+"");
+		l1 = playerLife;l2 = opponentLife;
+		
+		
+		if(playerAction == "shoot"){b1 = 03;s1 = 00;}
+		else if(playerAction == "block"){b1--;}
+		else{b1 = 03;s1 = 01;}
+		
+		if(opponentAction == "shoot"){b2 = 03;s2 = 00;}
+		else if(opponentAction == "block"){b2--;}
+		else{b2 = 03;s2 = 01;}
+		
 			
+		var current = (b1*1000)+(s1*100)+(b2*10)+s2;
+		if(learnRes.has(current) == false)
+			res.send("{\n\"action\": \""+hardRes.get(current)+"\"\n}");
+		//res.send("test");
+		
+		else{
+			if(hardRes.get(current) == "reload" && learnRes.get(current) == "shoot" && b1 > 0) 
+				res.send("{\n\"action\": \""+"block"+"\"\n}");
+			else if(hardRes.get(current) == "shoot" && learnRes.get(current) == "block" && b1 > 0) 
+			    res.send("{\n\"action\": \""+"block"+"\"\n}");				
+			else if(hardRes.get(current) == "block" && learnRes.get(current) == "block" && s1 == 0) 
+				res.send("{\n\"action\": \""+"reload"+"\"\n}");	
+			else
+				res.send("{\n\"action\": \""+hardRes.get(current)+"\"\n}");
+		}
 	}	
 		
 	
